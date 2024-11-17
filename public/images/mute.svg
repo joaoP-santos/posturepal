@@ -1,0 +1,19 @@
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.536 15.536A5 5 0 0015 12v-2a4 4 0 00-4-4V5a7 7 0 017 7v2a5 5 0 01-.536 2.536z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 12v-2a7 7 0 017-7v1a4 4 0 00-4 4v2a5 5 0 01-.536 2.536L5 12z"
+                />
+              </svg>

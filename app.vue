@@ -6,6 +6,18 @@
       <header class="mb-8">
         <h1 class="text-3xl font-bold text-gray-800">PosturePal</h1>
         <p class="text-gray-600">Your AI posture assistant</p>
+        <p v-if="postureQuality" class="text-gray-500">
+          Posture Quality:
+          <span
+            :class="
+              postureQuality === 'Good' ? 'text-blue-500' : 'text-red-500'
+            "
+            >{{ postureQuality }}</span
+          >
+        </p>
+        <p v-if="offsetWarning" class="text-red-500">
+          Please line up with the camera!
+        </p>
       </header>
 
       <!-- Main content -->
@@ -22,6 +34,14 @@
             playsinline
             ref="webcamRef"
           ></video>
+          <canvas
+            ref="canvasRef"
+            class="absolute inset-0 w-full h-full"
+            :class="{
+              'border-8 border-blue-500': postureQuality === 'Good',
+              'border-8 border-red-500': postureQuality === 'Bad',
+            }"
+          ></canvas>
 
           <!-- Loading state -->
           <div
@@ -54,162 +74,6 @@
               Nice posture!
             </div>
           </Transition>
-
-          <!-- Controls -->
-          <div
-            v-if="isStreaming"
-            class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 rounded-full px-4 py-2 flex items-center space-x-4"
-          >
-            <button
-              @click="toggleStream"
-              class="text-white hover:text-gray-200 transition-colors"
-              :title="isPaused ? 'Resume' : 'Pause'"
-            >
-              <svg
-                v-if="isPaused"
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <svg
-                v-else
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
-            <button
-              @click="toggleAudio"
-              class="text-white hover:text-gray-200 transition-colors"
-              :title="settings.enableSound ? 'Mute' : 'Unmute'"
-            >
-              <svg
-                v-if="settings.enableSound"
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15.536 15.536A5 5 0 0015 12v-2a4 4 0 00-4-4V5a7 7 0 017 7v2a5 5 0 01-.536 2.536z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 12v-2a7 7 0 017-7v1a4 4 0 00-4 4v2a5 5 0 01-.536 2.536L5 12z"
-                />
-              </svg>
-              <svg
-                v-else
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Statistics and Settings -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h2 class="font-semibold mb-2">Posture Statistics</h2>
-            <div class="space-y-2">
-              <p class="text-sm text-gray-600">
-                Session duration: {{ formatTime(sessionDuration) }}
-              </p>
-              <p class="text-sm text-gray-600">
-                Good posture time: {{ formatTime(goodPostureTime) }}
-              </p>
-              <p class="text-sm text-gray-600">
-                Posture corrections: {{ postureCorrections }}
-              </p>
-              <div class="mt-4">
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                  <div
-                    class="bg-emerald-500 h-2.5 rounded-full transition-all duration-300"
-                    :style="{
-                      width: `${
-                        (goodPostureTime / sessionDuration) * 100 || 0
-                      }%`,
-                    }"
-                  ></div>
-                </div>
-                <p class="text-xs text-gray-500 mt-1">Posture Score</p>
-              </div>
-            </div>
-          </div>
-          <div class="p-4 bg-gray-50 rounded-lg">
-            <h2 class="font-semibold mb-2">Settings</h2>
-            <div class="space-y-3">
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  v-model="settings.enableNotifications"
-                  class="form-checkbox rounded text-emerald-500"
-                />
-                <span class="ml-2 text-sm text-gray-600"
-                  >Enable notifications</span
-                >
-              </label>
-              <label class="flex items-center">
-                <input
-                  type="checkbox"
-                  v-model="settings.enableSound"
-                  class="form-checkbox rounded text-emerald-500"
-                />
-                <span class="ml-2 text-sm text-gray-600">Sound alerts</span>
-              </label>
-
-              <div class="pt-2">
-                <button
-                  @click="resetSession"
-                  class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm transition-colors"
-                >
-                  Reset Session
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -217,10 +81,18 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted } from "vue";
+import {
+  PoseLandmarker,
+  FilesetResolver,
+  DrawingUtils,
+} from "https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0";
 
 // Refs & Reactive State
 const webcamRef = ref(null);
+const canvasRef = ref(null);
+const offsetWarning = ref(false);
+let canvasCtx = null;
+let drawingUtils = null;
 const isStreaming = ref(false);
 const isPaused = ref(false);
 const streamingError = ref("");
@@ -228,11 +100,40 @@ const showPostureNotification = ref(false);
 const sessionDuration = ref(0);
 const goodPostureTime = ref(0);
 const postureCorrections = ref(0);
+const postureQuality = ref(null);
+let poseLandmarker = undefined;
+
+// Helpers
+
+function findDistance(x1, y1, x2, y2) {
+  const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+  return dist;
+}
+
+function findAngle(x1, y1, x2, y2) {
+  const theta = Math.acos(
+    ((y2 - y1) * -y1) / (Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) * y1)
+  );
+  const degree = Math.floor(180 / Math.PI) * theta;
+  return degree;
+}
+
+const createPoseLandmarker = async () => {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+  );
+  poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
+      delegate: "GPU",
+    },
+    runningMode: "VIDEO",
+    numPoses: 2,
+  });
+};
 
 const settings = reactive({
   enableNotifications: true,
-  enableSound: true,
-  autoRestart: false,
 });
 
 // Timers
@@ -246,6 +147,11 @@ const initializeWebcam = async () => {
       video: true,
     });
     webcamRef.value.srcObject = stream;
+    canvasCtx = canvasRef.value.getContext("2d");
+    drawingUtils = new DrawingUtils(canvasCtx);
+
+    await createPoseLandmarker();
+    await predictWebcam();
     isStreaming.value = true;
     startSession();
   } catch (err) {
@@ -254,75 +160,88 @@ const initializeWebcam = async () => {
   }
 };
 
-const startSession = () => {
-  sessionTimer = setInterval(() => {
-    sessionDuration.value++;
-    // Simulate good posture time (replace with actual AI model inference)
-    if (Math.random() > 0.3) {
-      goodPostureTime.value++;
-      if (!showPostureNotification.value) {
-        showPostureNotification.value = true;
-        if (settings.enableSound) {
-          playNotificationSound();
-        }
-        // Hide notification after 3 seconds
-        notificationTimer = setTimeout(() => {
-          showPostureNotification.value = false;
-        }, 3000);
-      }
-    } else {
-      showPostureNotification.value = false;
-      postureCorrections.value++;
-    }
-  }, 1000);
-};
+function calculatePosture(landmarks) {
+  if (!landmarks) return;
+  const w = canvasRef.value.clientWidth;
+  const h = canvasRef.value.clientHeight;
 
-const toggleStream = () => {
-  isPaused.value = !isPaused.value;
-  const stream = webcamRef.value.srcObject;
-  const tracks = stream.getTracks();
+  // Left shoulder
+  const leftShoulderX = Math.floor(landmarks[12].x * w);
+  const leftShoulderY = Math.floor(landmarks[12].y * h);
 
-  if (isPaused.value) {
-    tracks.forEach((track) => (track.enabled = false));
-    clearInterval(sessionTimer);
+  // Right shoulder
+  const rightShoulderX = Math.floor(landmarks[11].x * w);
+  const rightShoulderY = Math.floor(landmarks[11].y * h);
+
+  // Left ear
+  const leftEarX = Math.floor(landmarks[8].x * w);
+  const leftEarY = Math.floor(landmarks[8].y * h);
+
+  // Left hip
+  const leftHipX = Math.floor(landmarks[24].x * w);
+  const leftHipY = Math.floor(landmarks[24].y * h);
+
+  // Calculate angles.
+  const neckInclination = findAngle(
+    leftShoulderX,
+    leftShoulderY,
+    leftEarX,
+    leftEarY
+  );
+  const torsoInclination = findAngle(
+    leftHipX,
+    leftHipY,
+    leftShoulderX,
+    leftShoulderY
+  );
+
+  const offset = findDistance(
+    leftShoulderX,
+    leftShoulderY,
+    rightShoulderX,
+    rightShoulderY
+  );
+
+  if (offset > 100) {
+    offsetWarning.value = true;
+  } else offsetWarning.value = false;
+
+  if (neckInclination < 40 && torsoInclination < 10) {
+    postureQuality.value = "Good";
   } else {
-    tracks.forEach((track) => (track.enabled = true));
-    startSession();
+    postureQuality.value = "Bad";
+    postureCorrections.value++;
   }
-};
+}
 
-const toggleAudio = () => {
-  settings.enableSound = !settings.enableSound;
-};
+let lastVideoTime = -1;
+async function predictWebcam() {
+  /*   canvas.value.style.height = videoHeight;
+  video.style.height = videoHeight;
+  canvas.value.style.width = videoWidth;
+  video.style.width = videoWidth; */
+  // Now let's start detecting the stream.
 
-const resetSession = () => {
-  sessionDuration.value = 0;
-  goodPostureTime.value = 0;
-  postureCorrections.value = 0;
-  showPostureNotification.value = false;
-};
+  let startTimeMs = performance.now();
+  if (lastVideoTime !== webcamRef.value.currentTime) {
+    lastVideoTime = webcamRef.value.currentTime;
+    poseLandmarker.detectForVideo(webcamRef.value, startTimeMs, (result) => {
+      canvasCtx.clearRect(0, 0, 100000, 100000);
+      for (const landmark of result.landmarks) {
+        drawingUtils.drawLandmarks(landmark, {
+          radius: 1,
+        });
+        drawingUtils.drawConnectors(landmark, PoseLandmarker.POSE_CONNECTIONS);
+      }
+      calculatePosture(result.landmarks[0]);
+    });
+  }
 
-const playNotificationSound = () => {
-  // You can implement actual sound playing here
-  console.log("Playing notification sound");
-};
+  // Call this function again to keep predicting when the browser is ready.
+  window.requestAnimationFrame(predictWebcam);
+}
 
-const formatTime = (seconds) => {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
-};
-
-// Lifecycle hooks
 onMounted(() => {
   initializeWebcam();
-});
-
-onUnmounted(() => {
-  if (webcamRef.value?.srcObject) {
-    webcamRef.value.srcObject.getTracks().forEach((track) => track.stop());
-  }
-  clearInterval(sessionTimer);
-  clearTimeout(notificationTimer);
 });
 </script>
