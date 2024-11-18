@@ -85,7 +85,7 @@ import {
   PoseLandmarker,
   FilesetResolver,
   DrawingUtils,
-} from "https://cdn.skypack.dev/@mediapipe/tasks-vision@0.10.0";
+} from "@mediapipe/tasks-vision";
 
 // Refs & Reactive State
 const webcamRef = ref(null);
@@ -94,11 +94,8 @@ const offsetWarning = ref(false);
 let canvasCtx = null;
 let drawingUtils = null;
 const isStreaming = ref(false);
-const isPaused = ref(false);
 const streamingError = ref("");
 const showPostureNotification = ref(false);
-const sessionDuration = ref(0);
-const goodPostureTime = ref(0);
 const postureCorrections = ref(0);
 const postureQuality = ref(null);
 let poseLandmarker = undefined;
@@ -135,10 +132,6 @@ const createPoseLandmarker = async () => {
 const settings = reactive({
   enableNotifications: true,
 });
-
-// Timers
-let sessionTimer = null;
-let notificationTimer = null;
 
 // Methods
 const initializeWebcam = async () => {
@@ -206,11 +199,26 @@ function calculatePosture(landmarks) {
     offsetWarning.value = true;
   } else offsetWarning.value = false;
 
-  if (neckInclination < 40 && torsoInclination < 10) {
-    postureQuality.value = "Good";
-  } else {
-    postureQuality.value = "Bad";
-    postureCorrections.value++;
+  // Initialize function properties if they don't exist
+  if (typeof calculatePosture.lastQuality === "undefined") {
+    calculatePosture.lastQuality = null;
+    calculatePosture.stabilityTimer = null;
+  }
+
+  const currentQuality =
+    neckInclination < 40 && torsoInclination < 10 ? "Good" : "Bad";
+
+  if (currentQuality !== calculatePosture.lastQuality) {
+    calculatePosture.lastQuality = currentQuality;
+    if (calculatePosture.stabilityTimer) {
+      clearTimeout(calculatePosture.stabilityTimer);
+    }
+    calculatePosture.stabilityTimer = setTimeout(() => {
+      postureQuality.value = currentQuality;
+      if (currentQuality === "Bad") {
+        postureCorrections.value++;
+      }
+    }, 1000);
   }
 }
 
@@ -228,10 +236,27 @@ async function predictWebcam() {
     poseLandmarker.detectForVideo(webcamRef.value, startTimeMs, (result) => {
       canvasCtx.clearRect(0, 0, 100000, 100000);
       for (const landmark of result.landmarks) {
-        drawingUtils.drawLandmarks(landmark, {
-          radius: 1,
-        });
-        drawingUtils.drawConnectors(landmark, PoseLandmarker.POSE_CONNECTIONS);
+        drawingUtils.drawLandmarks(
+          [
+            landmark[12],
+            landmark[11],
+            landmark[8],
+            landmark[7],
+            landmark[23],
+            landmark[24],
+          ],
+          {
+            radius: 1,
+          }
+        );
+        const con = PoseLandmarker.POSE_CONNECTIONS;
+        drawingUtils.drawConnectors(landmark, [
+          con[9],
+          con[22],
+          con[23],
+          con[24],
+        ]);
+        console.log(PoseLandmarker.POSE_CONNECTIONS);
       }
       calculatePosture(result.landmarks[0]);
     });
