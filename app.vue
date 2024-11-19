@@ -206,7 +206,7 @@ function calculatePosture(landmarks) {
   }
 
   const currentQuality =
-    neckInclination < 40 && torsoInclination < 10 ? "Good" : "Bad";
+    neckInclination < 30 && torsoInclination < 10 ? "Good" : "Bad";
 
   if (currentQuality !== calculatePosture.lastQuality) {
     calculatePosture.lastQuality = currentQuality;
