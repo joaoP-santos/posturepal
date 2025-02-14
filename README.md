@@ -1,3 +1,9 @@
+<p  align="center">
+  <a href="https://youtube.com/shorts/tyatf1hE8IU?feature=share">
+  <img width="400" src="https://github.com/user-attachments/assets/f41f77e6-2826-45ad-9d7f-506b858d9f3f">
+  </a>
+</p>
+
 # Nuxt Minimal Starter
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
